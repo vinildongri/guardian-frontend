@@ -16,8 +16,17 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     const json = Object.fromEntries(new FormData(e.currentTarget));
     setBusy(true);
     setError("");
+
     try {
-      await api(`/auth/${mode}`, { method: "POST", json });
+      // 1. Capture the response and tell TypeScript it contains an optional token string
+      const response = await api(`/auth/${mode}`, { method: "POST", json }) as { token?: string };
+
+      // 2. Extract the token and manually set it as a cookie
+      if (response && response.token) {
+        document.cookie = `token=${response.token}; path=/; max-age=86400; SameSite=Lax`;
+      }
+
+      // 3. Now redirect
       router.replace("/dashboard");
     } catch (err) {
       setError((err as Error).message);
